@@ -7,9 +7,12 @@ DigitalOut shdn(p26);
 PwmOut led(p23);
 PwmOut speaker(p24);
 
+
+
 volatile bool triggered = false;
 volatile bool armed = false;
 volatile float brightness = 1.0;
+volatile bool muted = true;
 
 #define VL53L0_I2C_SDA   p28
 #define VL53L0_I2C_SCL   p27
@@ -30,8 +33,8 @@ void alarmLED(void const *args) {
 
 void alarmSound(void const *args) {
     while(1) {
-        if (triggered) {
-            //speaker = 0.5;
+        if (triggered && !muted) {
+            speaker = 0.5;
         } else {
             speaker = 0;
         }
@@ -70,7 +73,7 @@ void tripWire(void const *args) {
 
 int main()
 {
-    speaker.period(1/340.0);
+    speaker.period(1/500.0);
     Thread t1(tripWire);
     Thread t2(alarmLED);
     Thread t3(alarmSound);
@@ -98,6 +101,8 @@ int main()
                         armed = false;
                         triggered = false;
                         break;
+                    case 'M':
+                        muted = !muted;
                     case 'B':
                         switch(buffer[2]) {
                             case '0':
@@ -134,5 +139,6 @@ int main()
                 }
             }
         }
+        Thread::wait(300);
     }
 }
