@@ -74,7 +74,14 @@ void* passThrough(void* socket) {
 	fcntl(newsock, F_SETFL, O_NONBLOCK);
 	char pcbuffer[4];
 	char mbedbuffer[4];
-	
+	char buffer[4];
+
+	buffer[0] = '!';
+	buffer[1] = 'C';
+	buffer[2] = 'C';
+	buffer[3] = 'C';
+
+	write(newsock, buffer, 4);
 	
 	while (1) {
 		if (sockID < numSocks) {
