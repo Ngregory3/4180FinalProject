@@ -4,9 +4,9 @@
 #include "rtos.h"
 Serial pi(USBTX,USBRX);
 DigitalOut shdn(p26);
-PwmOut red(p23);
+PwmOut red(p21);
 PwmOut green(p22);
-PwmOut blue(p21);
+PwmOut blue(p23);
 PwmOut speaker(p24);
 
 volatile bool triggered = false;
