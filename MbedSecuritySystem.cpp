@@ -4,10 +4,10 @@
 #include "rtos.h"
 Serial pi(USBTX,USBRX);
 DigitalOut shdn(p26);
-PwmOut led(p23);
+PwmOut red(p23);
+PwmOut green(p22);
+PwmOut blue(p21);
 PwmOut speaker(p24);
-
-
 
 volatile bool triggered = false;
 volatile bool armed = false;
@@ -21,11 +21,19 @@ static XNucleo53L0A1 *board=NULL;
 void alarmLED(void const *args) {
     while(1) {
         if (triggered) {
-            led = 1 * brightness;
+            blue = 0;
+            green = 0;
+            red = 1.0 * brightness;
             Thread::wait(100);
-            led = 0;
+            red = 0;
+        } else if (armed) {
+            red = 0;
+            blue = 1.0 * brightness;
+            green = 0;
         } else {
-            led = 0;
+            red = 0;
+            green = 1.0 * brightness;
+            blue = 0;
         }
         Thread::wait(100);
     }
@@ -95,10 +103,10 @@ int main()
             if (buffer[0] == '!') {
                 switch(buffer[1]) {
                     case 'A':
-                        armed = true;
+                        armed = !armed;
+                        triggered = false;
                         break;
                     case 'D':
-                        armed = false;
                         triggered = false;
                         break;
                     case 'M':
@@ -138,6 +146,10 @@ int main()
                         }
                 }
             }
+            pi.putc('!');
+            pi.putc('C');
+            pi.putc('C');
+            pi.putc('C');
         }
         Thread::wait(300);
     }
