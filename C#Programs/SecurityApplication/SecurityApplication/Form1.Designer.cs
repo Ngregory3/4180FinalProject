@@ -43,6 +43,7 @@ namespace SecurityApplication
             this.trackBarBrightness = new System.Windows.Forms.TrackBar();
             this.labelErrorMessage = new System.Windows.Forms.Label();
             this.textBoxAlarmStatus = new System.Windows.Forms.TextBox();
+            this.buttonDisconnect = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.trackBarVolume)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.trackBarBrightness)).BeginInit();
             this.SuspendLayout();
@@ -124,7 +125,7 @@ namespace SecurityApplication
             // trackBarVolume
             // 
             this.trackBarVolume.Location = new System.Drawing.Point(136, 232);
-            this.trackBarVolume.Maximum = 9;
+            this.trackBarVolume.Maximum = 1;
             this.trackBarVolume.Name = "trackBarVolume";
             this.trackBarVolume.Size = new System.Drawing.Size(278, 56);
             this.trackBarVolume.TabIndex = 8;
@@ -156,6 +157,7 @@ namespace SecurityApplication
             this.trackBarBrightness.Name = "trackBarBrightness";
             this.trackBarBrightness.Size = new System.Drawing.Size(278, 56);
             this.trackBarBrightness.TabIndex = 12;
+            this.trackBarBrightness.Value = 9;
             this.trackBarBrightness.Scroll += new System.EventHandler(this.trackBarBrightness_Scroll);
             this.trackBarBrightness.MouseUp += new System.Windows.Forms.MouseEventHandler(this.trackBarBrightness_MouseUp);
             // 
@@ -171,19 +173,32 @@ namespace SecurityApplication
             // 
             // textBoxAlarmStatus
             // 
+            this.textBoxAlarmStatus.BackColor = System.Drawing.Color.Green;
             this.textBoxAlarmStatus.Location = new System.Drawing.Point(507, 226);
             this.textBoxAlarmStatus.Name = "textBoxAlarmStatus";
             this.textBoxAlarmStatus.ReadOnly = true;
             this.textBoxAlarmStatus.Size = new System.Drawing.Size(116, 22);
             this.textBoxAlarmStatus.TabIndex = 14;
-            this.textBoxAlarmStatus.Text = "Disarmed";
+            this.textBoxAlarmStatus.Text = "DISARMED";
             this.textBoxAlarmStatus.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+            this.textBoxAlarmStatus.TextChanged += new System.EventHandler(this.textBoxAlarmStatus_TextChanged);
+            // 
+            // buttonDisconnect
+            // 
+            this.buttonDisconnect.Location = new System.Drawing.Point(527, 374);
+            this.buttonDisconnect.Name = "buttonDisconnect";
+            this.buttonDisconnect.Size = new System.Drawing.Size(96, 23);
+            this.buttonDisconnect.TabIndex = 15;
+            this.buttonDisconnect.Text = "Disconnect";
+            this.buttonDisconnect.UseVisualStyleBackColor = true;
+            this.buttonDisconnect.Click += new System.EventHandler(this.buttonDisconnect_Click);
             // 
             // FormSecurityApp
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 549);
+            this.Controls.Add(this.buttonDisconnect);
             this.Controls.Add(this.textBoxAlarmStatus);
             this.Controls.Add(this.labelErrorMessage);
             this.Controls.Add(this.trackBarBrightness);
@@ -223,6 +238,7 @@ namespace SecurityApplication
         private System.Windows.Forms.TrackBar trackBarBrightness;
         private System.Windows.Forms.Label labelErrorMessage;
         private System.Windows.Forms.TextBox textBoxAlarmStatus;
+        private System.Windows.Forms.Button buttonDisconnect;
     }
 }
 

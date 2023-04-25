@@ -2,16 +2,29 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Threading;
+using System.Diagnostics;
 using System.Windows.Forms;
+using System.Net;
 using System.Net.Sockets;
+using System.Threading;
 
 namespace SecurityApplication
 {
-    static class Program
+
+    public enum alarmState {
+        ARMED,
+        DISARMED,
+        TRIGGERED
+    }
+
+    public class Program
     {
         /// <summary>
         /// The main entry point for the application.
         /// </summary>
+
+        public static event EventHandler AlarmTriggered;
 
         public static String ipServer = "";
         public static Int32 port = 61000;
@@ -20,29 +33,36 @@ namespace SecurityApplication
         public static String connectionErrorMessage = "";
 
         public static String ackMessage= "!CCC";
-        public static String testMessage = "!XX";
+        public static String testMessage = "!XXX";
         public static String activateToggleMessage = "!A";
         public static String disarmMessage = "!D";
         public static String brightnessMessage = "!B";
-        public static String volumeMessage = "!V";
+        public static String volumeMessage = "!M";
         public static String triggeredMessage = "!!!!";
 
-        private static String buffer = "XXXXXX";
+        public static String requestActiveMessage = "#A";
+        public static String requestBrightnessMessage = "#B";
+        public static String requestVolumeMessage = "#M";
+        public static String requestTriggeredMessage = "#T";
+
+        private static String buffer = "XX";
         private static bool connectionOpened = false;
+
+        private static FormSecurityApp guiForm;
+
+        private static Thread triggeredThread;
+        private static Thread canaryThread;
 
         [STAThread]
         static void Main()
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new FormSecurityApp());
-
-/*            while (true)
-            {
-                checkTriggered();
-                //Need to add wait here!!
-            }*/
+            FormSecurityApp form = new FormSecurityApp();
+            guiForm = form;
+            Application.Run(form);
         }
+
 
         public static bool openConnection()
         {
@@ -100,12 +120,22 @@ namespace SecurityApplication
             }
         }
 
+        public static void startTriggerThread()
+        {
+            triggeredThread = new Thread(() => {
+                Thread.CurrentThread.IsBackground = true;
+                checkTriggered();
+            });
+            triggeredThread.Start();
+        }
+
         public static bool closeConnection()
         {
             try
             {
                 stream.Close();
                 client.Close();
+                triggeredThread.Abort();
                 connectionOpened = false;
                 return true;
             }
@@ -127,18 +157,113 @@ namespace SecurityApplication
 
                 // Send the message to the connected TcpServer.
                 stream.Write(data, 0, data.Length);
+
                 return true;
             } else
             {
                 connectionErrorMessage = "There is no connection open";
+                Console.WriteLine("No Connection");
                 return false;
             }
+        }
+
+        public static String requestMessage(String message)
+        {
+            //May need to add acknowledge checks when there is time
+            if (connectionOpened)
+            {
+                String messageWithBuffer = message + buffer;
+                // Translate the passed message into ASCII and store it as a Byte array.
+                Byte[] data = System.Text.Encoding.ASCII.GetBytes(messageWithBuffer);
+
+                // Send the message to the connected TcpServer.
+                stream.Write(data, 0, data.Length);
+
+                data = new Byte[256];
+
+                // String to store the response ASCII representation.
+                String responseData = String.Empty;
+
+                // Read the first batch of the TcpServer response bytes.
+                Int32 bytes = stream.Read(data, 0, data.Length);
+                responseData = System.Text.Encoding.ASCII.GetString(data, 0, bytes);
+
+                return responseData;
+            }
+            else
+            {
+                connectionErrorMessage = "There is no connection open";
+                Console.WriteLine("No Connection");
+                return "";
+            }
+        }
+
+        public static void clearBuffer()
+        {
+            Byte[] data = new Byte[256];
+            stream.Read(data, 0, data.Length);
         }
 
         //Want to set this up as an interrupt basically calling this whenever something is sent
         public static bool checkTriggered()
         {
-            return false;
+            Console.WriteLine("Running check triggered");
+            Byte[] data = new Byte[256];
+            int i;
+            String input;
+            while (true)
+            {
+                try
+                {
+                    while ((i = stream.Read(data, 0, data.Length)) != 0)
+                    {
+                        input = System.Text.Encoding.ASCII.GetString(data, 0, i);
+                        if (input.Contains(triggeredMessage))
+                        {
+                            Console.WriteLine("Received Triggered Status");
+                            guiForm.Invoke(new MethodInvoker(guiForm.alarmTriggered));
+                        }
+                        Thread.Sleep(500);
+                    }
+                } catch (Exception e)
+                {
+                    //Do nothing
+                }
+            }
+        }
+
+        public static void checkConnection()
+        {
+            Console.WriteLine("Running connection Canary");
+            while (true)
+            {
+                Thread.Sleep(10000);
+                try
+                {
+                    Byte[] data = System.Text.Encoding.ASCII.GetBytes(testMessage);
+                    stream.Write(data, 0, data.Length);
+
+                    // Receive the server response.
+                    data = new Byte[256];
+                    String responseData = String.Empty;
+                    Int32 bytes = stream.Read(data, 0, data.Length);
+                    responseData = System.Text.Encoding.ASCII.GetString(data, 0, bytes);
+
+/*                    if (!responseData.Equals(ackMessage))
+                    {
+                        Console.WriteLine("Connection failed");
+                        guiForm.Invoke(new MethodInvoker(guiForm.connectionFailed));
+                        closeConnection();
+                        return;
+                    }*/
+                } catch (Exception e)
+                {
+                    Console.WriteLine("Connection failed {0}", e.Message);
+                    guiForm.Invoke(new MethodInvoker(guiForm.connectionFailed));
+                    closeConnection();
+                    return;
+                }
+            }
         }
     }
 }
