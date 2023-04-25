@@ -167,9 +167,8 @@ namespace SecurityApplication
             this.labelErrorMessage.Location = new System.Drawing.Point(395, 64);
             this.labelErrorMessage.MaximumSize = new System.Drawing.Size(300, 100);
             this.labelErrorMessage.Name = "labelErrorMessage";
-            this.labelErrorMessage.Size = new System.Drawing.Size(298, 34);
+            this.labelErrorMessage.Size = new System.Drawing.Size(0, 17);
             this.labelErrorMessage.TabIndex = 13;
-            this.labelErrorMessage.Text = "Really long error message for example to see what\'s going on hmmmmmm";
             // 
             // textBoxAlarmStatus
             // 
@@ -181,7 +180,6 @@ namespace SecurityApplication
             this.textBoxAlarmStatus.TabIndex = 14;
             this.textBoxAlarmStatus.Text = "DISARMED";
             this.textBoxAlarmStatus.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
-            this.textBoxAlarmStatus.TextChanged += new System.EventHandler(this.textBoxAlarmStatus_TextChanged);
             // 
             // buttonDisconnect
             // 

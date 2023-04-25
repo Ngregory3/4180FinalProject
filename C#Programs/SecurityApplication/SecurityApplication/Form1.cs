@@ -1,13 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using System.Net.Sockets;
 using System.Threading;
 
 namespace SecurityApplication
@@ -96,9 +89,6 @@ namespace SecurityApplication
             if (initComplete)
             {
                 bool result = Program.sendMessage(Program.disarmMessage);
-                //triggerFlag = 1;
-                //Thread.Sleep(1000);
-                //Program.clearBuffer();
                 if (checkBoxActive.Checked)
                 {
                     Console.WriteLine("Armed changed");
@@ -202,11 +192,6 @@ namespace SecurityApplication
             labelConnectionStatus.Text = "Not Connected";
             labelErrorMessage.Text = Program.connectionErrorMessage;
             initComplete = false;
-        }
-
-        private void textBoxAlarmStatus_TextChanged(object sender, EventArgs e)
-        {
-
         }
 
         private void buttonDisconnect_Click(object sender, EventArgs e)

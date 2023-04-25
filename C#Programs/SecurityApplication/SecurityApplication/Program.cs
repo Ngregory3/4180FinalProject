@@ -1,13 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using System.Threading;
-using System.Diagnostics;
 using System.Windows.Forms;
-using System.Net;
 using System.Net.Sockets;
-using System.Threading;
 
 namespace SecurityApplication
 {
@@ -51,7 +45,6 @@ namespace SecurityApplication
         private static FormSecurityApp guiForm;
 
         private static Thread triggeredThread;
-        private static Thread canaryThread;
 
         [STAThread]
         static void Main()
@@ -62,7 +55,6 @@ namespace SecurityApplication
             guiForm = form;
             Application.Run(form);
         }
-
 
         public static bool openConnection()
         {
@@ -198,13 +190,7 @@ namespace SecurityApplication
             }
         }
 
-        public static void clearBuffer()
-        {
-            Byte[] data = new Byte[256];
-            stream.Read(data, 0, data.Length);
-        }
 
-        //Want to set this up as an interrupt basically calling this whenever something is sent
         public static bool checkTriggered()
         {
             Console.WriteLine("Running check triggered");
@@ -227,42 +213,9 @@ namespace SecurityApplication
                     }
                 } catch (Exception e)
                 {
-                    //Do nothing
+                    //If problem with connection, retry on next loop
                 }
-            }
-        }
-
-        public static void checkConnection()
-        {
-            Console.WriteLine("Running connection Canary");
-            while (true)
-            {
-                Thread.Sleep(10000);
-                try
-                {
-                    Byte[] data = System.Text.Encoding.ASCII.GetBytes(testMessage);
-                    stream.Write(data, 0, data.Length);
-
-                    // Receive the server response.
-                    data = new Byte[256];
-                    String responseData = String.Empty;
-                    Int32 bytes = stream.Read(data, 0, data.Length);
-                    responseData = System.Text.Encoding.ASCII.GetString(data, 0, bytes);
-
-/*                    if (!responseData.Equals(ackMessage))
-                    {
-                        Console.WriteLine("Connection failed");
-                        guiForm.Invoke(new MethodInvoker(guiForm.connectionFailed));
-                        closeConnection();
-                        return;
-                    }*/
-                } catch (Exception e)
-                {
-                    Console.WriteLine("Connection failed {0}", e.Message);
-                    guiForm.Invoke(new MethodInvoker(guiForm.connectionFailed));
-                    closeConnection();
-                    return;
-                }
+                Thread.Sleep(1000);
             }
         }
     }
