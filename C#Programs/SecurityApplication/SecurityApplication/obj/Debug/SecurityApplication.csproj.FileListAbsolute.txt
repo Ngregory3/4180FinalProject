@@ -1,0 +1,10 @@
+C:\Users\nrgsp\OneDrive\Desktop\Classes\ECE 4180\Final Project\4180FinalProject\C#Programs\SecurityApplication\SecurityApplication\obj\Debug\SecurityApplication.csproj.AssemblyReference.cache
+C:\Users\nrgsp\OneDrive\Desktop\Classes\ECE 4180\Final Project\4180FinalProject\C#Programs\SecurityApplication\SecurityApplication\obj\Debug\SecurityApplication.Properties.Resources.resources
+C:\Users\nrgsp\OneDrive\Desktop\Classes\ECE 4180\Final Project\4180FinalProject\C#Programs\SecurityApplication\SecurityApplication\obj\Debug\SecurityApplication.csproj.GenerateResource.cache
+C:\Users\nrgsp\OneDrive\Desktop\Classes\ECE 4180\Final Project\4180FinalProject\C#Programs\SecurityApplication\SecurityApplication\obj\Debug\SecurityApplication.csproj.CoreCompileInputs.cache
+C:\Users\nrgsp\OneDrive\Desktop\Classes\ECE 4180\Final Project\4180FinalProject\C#Programs\SecurityApplication\SecurityApplication\bin\Debug\SecurityApplication.exe.config
+C:\Users\nrgsp\OneDrive\Desktop\Classes\ECE 4180\Final Project\4180FinalProject\C#Programs\SecurityApplication\SecurityApplication\bin\Debug\SecurityApplication.exe
+C:\Users\nrgsp\OneDrive\Desktop\Classes\ECE 4180\Final Project\4180FinalProject\C#Programs\SecurityApplication\SecurityApplication\bin\Debug\SecurityApplication.pdb
+C:\Users\nrgsp\OneDrive\Desktop\Classes\ECE 4180\Final Project\4180FinalProject\C#Programs\SecurityApplication\SecurityApplication\obj\Debug\SecurityApplication.exe
+C:\Users\nrgsp\OneDrive\Desktop\Classes\ECE 4180\Final Project\4180FinalProject\C#Programs\SecurityApplication\SecurityApplication\obj\Debug\SecurityApplication.pdb
+C:\Users\nrgsp\OneDrive\Desktop\Classes\ECE 4180\Final Project\4180FinalProject\C#Programs\SecurityApplication\SecurityApplication\obj\Debug\SecurityApplication.FormSecurityApp.resources
