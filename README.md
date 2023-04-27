@@ -159,7 +159,7 @@ The C# client and Mbed communicate via a TCP to Serial passthrough server on the
 | #MXX       | Mute Status     |
 | #TXX       | Trigger Status  |
 
-The character X signifies buffer characters and has no meaning. Responses will be identical to requests but the X buffer characters will instead contain the status requested.
+The character X signifies buffer characters and has no meaning. Responses will be identical to requests but the X buffer characters will instead contain the status requested. Possible values are 00 for false, 11 for true, and 0X - 9X for brightness values.
 
 **Example 1)** C# App Requesting Active Status from Mbed when device is armed:<br>
 | Send      | Recieve   |
