@@ -1,0 +1,107 @@
+[
+    {
+        "id": "a45c544deec4e51d",
+        "type": "tab",
+        "label": "Email Trigger Flow",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "ca408d6cf96347be",
+        "type": "rpi-gpio in",
+        "z": "a45c544deec4e51d",
+        "name": "Input Pin (GPIO 17)",
+        "pin": "17",
+        "intype": "tri",
+        "debounce": "25",
+        "read": false,
+        "bcm": true,
+        "x": 250,
+        "y": 260,
+        "wires": [
+            [
+                "273cd5d522a00a04"
+            ]
+        ]
+    },
+    {
+        "id": "2f8b63471b74e636",
+        "type": "e-mail",
+        "z": "a45c544deec4e51d",
+        "server": "smtp.office365.com",
+        "port": "587",
+        "secure": false,
+        "tls": true,
+        "name": "finalprojdev4180@outlook.com",
+        "dname": "",
+        "x": 930,
+        "y": 360,
+        "wires": [],
+        "info": "You're being robbed!"
+    },
+    {
+        "id": "273cd5d522a00a04",
+        "type": "trigger",
+        "z": "a45c544deec4e51d",
+        "name": "",
+        "op1": "1",
+        "op2": "0",
+        "op1type": "str",
+        "op2type": "str",
+        "duration": "1",
+        "extend": false,
+        "overrideDelay": false,
+        "units": "s",
+        "reset": "",
+        "bytopic": "all",
+        "topic": "topic",
+        "outputs": 1,
+        "x": 440,
+        "y": 260,
+        "wires": [
+            [
+                "c913c3d445d1adbe"
+            ]
+        ]
+    },
+    {
+        "id": "a5659a9fb2a41dc4",
+        "type": "function",
+        "z": "a45c544deec4e51d",
+        "name": "function 1",
+        "func": "msg.payload = \"You're being robbed\";\nmsg.topic = \"Security Device Update\";\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 780,
+        "y": 260,
+        "wires": [
+            [
+                "2f8b63471b74e636"
+            ]
+        ]
+    },
+    {
+        "id": "c913c3d445d1adbe",
+        "type": "rbe",
+        "z": "a45c544deec4e51d",
+        "name": "",
+        "func": "narrowbandEq",
+        "gap": "1",
+        "start": "",
+        "inout": "out",
+        "septopics": true,
+        "property": "payload",
+        "topi": "topic",
+        "x": 610,
+        "y": 260,
+        "wires": [
+            [
+                "a5659a9fb2a41dc4"
+            ]
+        ]
+    }
+]
