@@ -1,61 +1,55 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using System.Net.Sockets;
 using System.Threading;
 
 namespace SecurityApplication
 {
     public partial class FormSecurityApp : Form
     {
-        //Set up text variables
-        private bool initComplete = false;
+        private bool activeConnection = false;
         private int brightnessValue = 0;
         private int volumeValue = 0;
-        private static Mutex mutex = new Mutex();
+        private static Mutex alarmStatusMutex = new Mutex();
 
         public FormSecurityApp()
         {
             InitializeComponent();
         }
 
+        //Called to update the status of the GUI to match the alarm system once a TCP connection has been established
         private void setupOnConnect()
         {
-            //Check if triggered
+            //Check the current status of the alarm system, and update the GUI accordingly
             Console.WriteLine("Check Triggered");
             String result;
             result = Program.requestMessage(Program.requestTriggeredMessage);
             if (result.Equals("#T11"))
             {
+                //Alarm is triggered
                 changeStatus(alarmState.TRIGGERED);
                 checkBoxActive.Checked = true;
             } else
             {
-                //Set if active
                 Console.WriteLine("Check Armed");
                 result = Program.requestMessage(Program.requestActiveMessage);
                 Console.WriteLine("Result: {0}", result);
                 if (result.Equals("#A11"))
                 {
-                    //Armed
+                    //Alarm is armed
                     Console.WriteLine("Armed");
                     changeStatus(alarmState.ARMED);
                     checkBoxActive.Checked = true;
                 }
             }
+            //Alarm is disarmed if neither triggered or armed
 
             Console.WriteLine("Check Volume");
             result = Program.requestMessage(Program.requestVolumeMessage);
             Console.WriteLine("Result: {0}", result);
             if (result.Equals("#M00"))
             {
-                //Volume on
+                //Volume is on
                 trackBarVolume.Value = 1;
             }
 
@@ -63,10 +57,12 @@ namespace SecurityApplication
             result = Program.requestMessage(Program.requestBrightnessMessage);
             Console.WriteLine("Result: {0}", result);
             Console.WriteLine("Brightness: {0}", result);
+            //Set brightness value to PWM output for LED
             int brightnessValue = Int32.Parse((result[2]).ToString());
             trackBarBrightness.Value = brightnessValue;
         }
 
+        //Called to change the alarm status text box
         private void changeStatus(alarmState newState)
         {
             Color c;
@@ -85,20 +81,17 @@ namespace SecurityApplication
                     c = Color.Gray;
                     break;
             }
-            mutex.WaitOne();
+            alarmStatusMutex.WaitOne();
             textBoxAlarmStatus.Text = newState.ToString();
             textBoxAlarmStatus.BackColor = c;
-            mutex.ReleaseMutex();
+            alarmStatusMutex.ReleaseMutex();
         }
 
         private void buttonDisarm_Click(object sender, EventArgs e)
         {
-            if (initComplete)
+            if (activeConnection)
             {
                 bool result = Program.sendMessage(Program.disarmMessage);
-                //triggerFlag = 1;
-                //Thread.Sleep(1000);
-                //Program.clearBuffer();
                 if (checkBoxActive.Checked)
                 {
                     Console.WriteLine("Armed changed");
@@ -116,7 +109,7 @@ namespace SecurityApplication
         {
             //Set server IP using text box
             Program.ipServer = textBoxIPAddress.Text;
-            bool result = Program.openConnection();
+            bool result = Program.openConnection(); //Creates a TCP connection to the device
             if (!result)
             {
                 labelConnectionStatus.Text = "Not Connected";
@@ -128,13 +121,13 @@ namespace SecurityApplication
                 labelErrorMessage.Text = "";
                 setupOnConnect();
                 Program.startTriggerThread();
-                initComplete = true;
+                activeConnection = true;
             }
         }
 
         private void checkBoxActive_CheckedChanged(object sender, EventArgs e)
         {
-            if (initComplete)
+            if (activeConnection)
             {
                 if (checkBoxActive.Checked)
                 {
@@ -154,43 +147,48 @@ namespace SecurityApplication
             }
         }
 
+        //Keeps track of the change in values for brightness of the LED
         private void trackBarBrightness_Scroll(object sender, EventArgs e)
         {
-            if (initComplete)
+            if (activeConnection)
             {
                 brightnessValue = trackBarBrightness.Value;
             }
         }
 
+        //Only sends updated brightness value to LED when the user lets go of the track bar 
         private void trackBarBrightness_MouseUp(object sender, EventArgs e)
         {
-            if (initComplete)
+            if (activeConnection)
             {
                 String message = Program.brightnessMessage + brightnessValue.ToString();
                 bool result = Program.sendMessage(message);
             }
         }
 
+        //Keeps track of the change in volume of the speaker
         private void trackBarVolume_Scroll(object sender, EventArgs e)
         {
-            if (initComplete)
+            if (activeConnection)
             {
                 volumeValue = trackBarVolume.Value;
             }
         }
 
+        //Only sends updated volume value to the speaker when the user lets go of the track bar
         private void trackBarVolume_MouseUp(object sender, EventArgs e)
         {
-            if (initComplete)
+            if (activeConnection)
             {
                 String message = Program.volumeMessage + volumeValue.ToString();
                 bool result = Program.sendMessage(message);
             }
         }
 
+        //Called by Program.cs when a trigger is detected by the alarm system
         public void alarmTriggered()
         {
-            if (initComplete)
+            if (activeConnection)
             {
                 Console.WriteLine("Set to triggered");
                 changeStatus(alarmState.TRIGGERED);
@@ -201,12 +199,7 @@ namespace SecurityApplication
         {
             labelConnectionStatus.Text = "Not Connected";
             labelErrorMessage.Text = Program.connectionErrorMessage;
-            initComplete = false;
-        }
-
-        private void textBoxAlarmStatus_TextChanged(object sender, EventArgs e)
-        {
-
+            activeConnection = false;
         }
 
         private void buttonDisconnect_Click(object sender, EventArgs e)
@@ -214,7 +207,7 @@ namespace SecurityApplication
             Program.closeConnection();
             labelConnectionStatus.Text = "Not Connected";
             labelErrorMessage.Text = "Disconnected from Device";
-            initComplete = false;
+            activeConnection = false;
         }
     }
 }
