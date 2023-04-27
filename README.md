@@ -64,3 +64,110 @@ Note: Use the Mini-Micro USB cable to connect the Pi to the mbed.
 | RXD               |      | TXD           |                   |
 | GND               | GND  | GND           | GND               |
 | x2 5V             |      |               | 5V                |
+
+## Mbed Code<br>
+The Mbed code takes in input from the LIDAR sensor to determine if an intruder has entered the room. The mbed also controls the RGB LED output and speaker based on the current state of the alarm system and the settings given by the C# application. Finally, the Mbed will send a signal to the Rasbperry Pi when the alarm system is triggered to alert the Node-Red email system. <br>
+The Mbed is connected to the Rasbperry Pi through a Serial connection, which will send and recieve messages to and from the C# Application.<br>
+
+**MbedSecuritySystem.cpp**<br>
+Once compiled and running on the Mbed, the Mbed code will set the speaker period to 500 Hz.<br>
+Three threads are created:<br>
+* tripWire Thread<br>
+  The tripWire Thread tracks if the LIDAR has sensed an object that is between 120 and 600 mm for 3 cycles or longer.
+* alarmLED Thread<br>
+  The alarmLED Thread changes the RGB LED based on the current state. The brightness (PWM output) of the LED is determined by inputs from the C# Application.
+  * Triggered: RED and Flashing (0.2 second period)
+  * Armed: BLUE and ON
+  * Disarmed: GREEN and ON<br>
+* alarmSound Thread<br>
+  The alarmSound Thread sets the PWM output of the speaker to 0.5 if triggered, and 0 otherwise. If the system is muted, then the speaker output will always be set to 0.
+
+The main Thread checks the Serial input from the Rasbpery Pi. If the C# application sends a requests (#), then the Mbed will check the current state of the requested sensor or output and send it back. If a command (!) is recieved by the Mbed or C# application, then the device or app will update the status accordingly. (See TCP Command Table).
+The main thread will also check if the sensor has been triggered and send a message through the TCP client to update the C# applicaton GUI.
+
+## Raspberry Pi Code
+The Raspberry Pi Zero W only has two functions in the alarm system: managing the TCP service between the Mbed and C# Application and running the Node-Red service to alert the system user via email.
+
+**PiTCPServer.c**<br>
+The main function creates and opens a TCP server for users to connect to on port 61000. While the user is setting up the alarm system and connected to the Pi, it is recommended to get the IP addressed assigned to the Pi and write it down for future connection using the C# Application.
+
+The second function is a passthrough method that passes messages from the Mbed to the C# Applicaton and vice versa. Messages are sent in sets of 4 characters, with character buffers sent between each message.
+
+**EmailTriggerFlow.json**<br>
+This flow will need to be imported and deployed in Node-Red on the Raspberry Pi Zero W. The flow contains an Input Pin, Trigger, Narrowband, Function Block, and Email Send block.
+
+<img src="https://raw.githubusercontent.com/Ngregory3/4180FinalProject/main/Images/NodeRedFlowDiagram.JPG" width="350"><br>
+
+The input pin is used to trigger the email. The Mbed will send a short pulse to the Rasbperry Pi each time the alarm system is triggered. This pulse is sent for less than a second, allowing the Trigger to only fire once for each trigger event. The Narrowband block only fires a pulse when the trigger is set high, so that there isn't a second email sent when the signal pulse is set to 0. The function block sets up the header and body of the email, and finally the email block will send the email to the user.
+
+Outlook seems to be the only email that is still compatiable with the Node-Red email functionality. The user will need to input their Outlook userID and password into the email block and then Deploy the flow to Node-Red on the Pi. Example email sent to Outlook:
+
+<img src="https://raw.githubusercontent.com/Ngregory3/4180FinalProject/main/Images/EmailWarning.PNG" width="350"><br>
+
+
+## C# Application
+The Windows Form C# application connects to the Raspberry Pi Zero W through a TCP connection. As long as the application is on the same Wi-Fi as the Raspberry Pi, it can connect given an IP address.
+
+**Program.cs**<br>
+This file controls the TCP connection side of the applicaton, including initiating connection with the device and sending/receiving messages. Program.cs also contains all message headers (commands and requests), port information (61000), and a triggeredThread that checks for incoming trigger messages from the Mbed.
+
+**Form1.cs**<br>
+This holds the design information for the application GUI and the event handler functions for user interactions. Non helper functions:
+* setUpOnConnect: requests information on the current state of the system using Program.cs and updates the GUI accordingly
+* changeStatus: changes the color and text of the status textbox. Uses a mutex to avoid crashing the system if multiple instances of the function get called at once.
+* alarmTriggered: called by Program.cs when the triggeredThread detects a triggered message from the Mbed.
+
+Form1.cs does not directly interact with the TCP connection and requires the Program.cs file to send and recieve messages.
+
+### GUI Functionality
+* Connection
+  * IP Address Text Box: Input IP address of Raspbery Pi
+  * Connect Button: Attempts connection to TCP client using the given IP address
+  * Status Label: Shows the current status of the C# application (Connected/Not Connected)
+  * Status Error Message: Shows error message if one arises
+* Device Use
+  * Volume Track Bar: Changes volume to on or off
+  * Brightness Track Bar: Changes brightness to any value between 0 and 9
+  * Active Checkbox: Arms the device if checked, disarms the device if unchecked
+  * Disarm Button: Turns off the trigger if the device has been triggerd. The system will return to the Armed state if still armed, or disarmed state if the checkbox is unchecked.
+  * Status TextBox: Shows the current state of the system.
+    * Triggered: RED
+    * Armed: BLUE
+    * Disarmed: GREEN
+  * Disconnect Button: Disconnects the application from the TCP client. Requires clicking the Connect button to reconnect to the device.
+
+<img src="https://raw.githubusercontent.com/Ngregory3/4180FinalProject/main/Images/DisarmedScreenshot.JPG" width="350">
+<img src="https://raw.githubusercontent.com/Ngregory3/4180FinalProject/main/Images/ArmedScreenshot.JPG" width="350">
+<img src="https://raw.githubusercontent.com/Ngregory3/4180FinalProject/main/Images/TriggeredScreenshot.JPG" width="350"><br>
+
+## TCP Command Syntax
+| Character | Use              |
+|-----------|------------------|
+| !         | Command          |
+| #         | Request/Response |
+| A         | Alarm Active     |
+| D         | Disarm           |
+| B         | Brigthness       |
+| M         | Mute Speaker     |
+| T         | Trigger Request  |
+| !!!       | Alarm Triggered  |
+| X/C       | Buffer           |
+
+When the Mbed or C# Application send a request, both the request and response start with the # character. When they send a command to change state, the message starts with a ! and does not require a response.
+
+**Example 1)** C# App Requesting Active Status from Mbed when device is armed:<br>
+| Send      | Recieve   |
+|-----------|-----------|
+| #AXX      | #A11      |
+
+**Example 2)** C# App Setting Brightness of LED to maximum value:<br>
+| Send      | Recieve   |
+|-----------|-----------|
+| !B9X      |           |
+
+**Example 3)** C# App Receiving Triggered Status from Mbed:<br>
+| Send      | Recieve   |
+|-----------|-----------|
+|           | !!!!      |
+
+
