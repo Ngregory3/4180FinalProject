@@ -16,7 +16,8 @@ RGB LED<br>
 3x330 Ohm Resistor<br>
 VL53L0X LIDAR TOF Sensor<br>
 # Wiring
-Note: Connect Mbed and external power supply grounds together
+<img src="https://raw.githubusercontent.com/Ngregory3/4180FinalProject/main/Images/6F6EC5D8-5CD3-403F-A610-D143A668B1D5.jpeg" width="350"><br>
+
 ## Class D audio amplifier
 
 | TPA2005D1 | mbed | Speaker | External 5V Power |
@@ -29,6 +30,8 @@ Note: Connect Mbed and external power supply grounds together
 | IN-       | GND  |         | GND               |
 
 ## LIDAR TOF Sensor
+
+Note: A ribbon cable can be used to allow better placement of the LIDAR sensor.
 
 | VL53L0X | mbed       |
 |---------|------------|
