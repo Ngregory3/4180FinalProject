@@ -1,2 +1,2 @@
-# 4180FinalProject
-Dorm room security system
+# Dorm Security System
+
