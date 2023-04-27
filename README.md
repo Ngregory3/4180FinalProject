@@ -2,7 +2,9 @@
 ## Team Members
 William Diamond, Nathaniel Gregory
 ## Project Description
-This project is a wifi enabled Mbed and Raspberry Pi Zero W based dorm security device that can be remotely controled using a Windows C# desktop application.
+This project is a wifi enabled Mbed and Raspberry Pi Zero W based dorm security device that can be remotely controlled using a Windows C# desktop application.<br>
+
+[Video Demo](https://www.youtube.com/watch?v=cLvQkAxkBHs)
 # Parts List
 mbed LPC1768<br>
 Raspberry Pi Zero W<br>
@@ -18,7 +20,7 @@ VL53L0X LIDAR TOF Sensor<br>
 # Wiring
 <img src="https://raw.githubusercontent.com/Ngregory3/4180FinalProject/main/Images/6F6EC5D8-5CD3-403F-A610-D143A668B1D5.jpeg" width="350"><br>
 
-## Class D audio amplifier
+## Class D Audio Amplifier
 
 | TPA2005D1 | mbed | Speaker | External 5V Power |
 |-----------|------|---------|-------------------|
@@ -65,9 +67,9 @@ Note: Use the Mini-Micro USB cable to connect the Pi to the mbed.
 | GND               | GND  | GND           | GND               |
 | x2 5V             |      |               | 5V                |
 
+# Code
 ## Mbed Code<br>
-The Mbed code takes in input from the LIDAR sensor to determine if an intruder has entered the room. The mbed also controls the RGB LED output and speaker based on the current state of the alarm system and the settings given by the C# application. Finally, the Mbed will send a signal to the Rasbperry Pi when the alarm system is triggered to alert the Node-Red email system. <br>
-The Mbed is connected to the Rasbperry Pi through a Serial connection, which will send and recieve messages to and from the C# Application.<br>
+The Mbed code takes in input from the LIDAR sensor to determine if an intruder has entered the room. The mbed also controls the RGB LED output and speaker based on the current state of the alarm system and the settings given by the C# application. Finally, the Mbed will send a signal to the Rasbperry Pi when the alarm system is triggered to alert a Node-Red email system. The Mbed is connected to the Rasbperry Pi through a Serial connection, which will send and recieve messages to and from the C# Application.<br>
 
 **MbedSecuritySystem.cpp**<br>
 Once compiled and running on the Mbed, the Mbed code will set the speaker period to 500 Hz.<br>
@@ -83,16 +85,14 @@ Three threads are created:<br>
 * alarmSound Thread<br>
   The alarmSound Thread sets the PWM output of the speaker to 0.5 if triggered, and 0 otherwise. If the system is muted, then the speaker output will always be set to 0.
 
-The main Thread checks the Serial input from the Rasbpery Pi. If the C# application sends a requests (#), then the Mbed will check the current state of the requested sensor or output and send it back. If a command (!) is recieved by the Mbed or C# application, then the device or app will update the status accordingly. (See TCP Command Table).
-The main thread will also check if the sensor has been triggered and send a message through the TCP client to update the C# applicaton GUI.
+The main Thread checks the Serial input from the Rasbpery Pi. If the C# application sends a request (#), the Mbed will check the current state of the requested sensor or output and send it back. If a command (!) is recieved by the Mbed, then the device will update the status accordingly (See TCP Command Syntax).
+The main thread will also check if the sensor has been triggered and send a message to the client to update the C# applicaton GUI.
 
 ## Raspberry Pi Code
 The Raspberry Pi Zero W only has two functions in the alarm system: managing the TCP service between the Mbed and C# Application and running the Node-Red service to alert the system user via email.
 
 **PiTCPServer.c**<br>
-The main function creates and opens a TCP server for users to connect to on port 61000. While the user is setting up the alarm system and connected to the Pi, it is recommended to get the IP addressed assigned to the Pi and write it down for future connection using the C# Application.
-
-The second function is a passthrough method that passes messages from the Mbed to the C# Applicaton and vice versa. Messages are sent in sets of 4 characters, with character buffers sent between each message.
+The main function creates and opens a TCP server for users to connect to on port 61000. Whenever a client requests a connection, the server will accept it and start a thread for it. The thread will begin passing TCP traffic between the client and the Mbed over the USB Virtual Com Port in sets of 4 characters.
 
 **EmailTriggerFlow.json**<br>
 This flow will need to be imported and deployed in Node-Red on the Raspberry Pi Zero W. The flow contains an Input Pin, Trigger, Narrowband, Function Block, and Email Send block.
@@ -120,7 +120,7 @@ This holds the design information for the application GUI and the event handler 
 
 Form1.cs does not directly interact with the TCP connection and requires the Program.cs file to send and recieve messages.
 
-### GUI Functionality
+## GUI Functionality
 * Connection
   * IP Address Text Box: Input IP address of Raspbery Pi
   * Connect Button: Attempts connection to TCP client using the given IP address
@@ -141,20 +141,25 @@ Form1.cs does not directly interact with the TCP connection and requires the Pro
 <img src="https://raw.githubusercontent.com/Ngregory3/4180FinalProject/main/Images/ArmedScreenshot.JPG" width="350">
 <img src="https://raw.githubusercontent.com/Ngregory3/4180FinalProject/main/Images/TriggeredScreenshot.JPG" width="350"><br>
 
-## TCP Command Syntax
-| Character | Use              |
-|-----------|------------------|
-| !         | Command          |
-| #         | Request/Response |
-| A         | Alarm Active     |
-| D         | Disarm           |
-| B         | Brigthness       |
-| M         | Mute Speaker     |
-| T         | Trigger Request  |
-| !!!       | Alarm Triggered  |
-| X/C       | Buffer           |
+# TCP Command Syntax
+The C# client and Mbed communicate via a TCP to Serial passthrough server on the Pi. Whenever the server receives 4 characters from either the Mbed or the Pi, it forwards it to the other side. When the C# Application sends a request, both the request and response from the Mbed start with a # character. When a command is sent to change the state of either the Mbed or the Pi, the message starts with a ! and does not require a response.
 
-When the Mbed or C# Application send a request, both the request and response start with the # character. When they send a command to change state, the message starts with a ! and does not require a response.
+| Command    | Use                 |
+|--------    |---------------------|
+| !AXX       | Toggle Alarm Active |
+| !DXX       | Disarm              |
+| !B0X - !B9X| Brightness level    |
+| !MXX       | Mute Speaker        |
+| !!!!       | Alarm Triggered     |
+
+| Request    | Returns         |
+|--------    |-----------------|
+| #AXX       | Alarm Status    |
+| #BXX       | Brightness level|
+| #MXX       | Mute Status     |
+| #TXX       | Trigger Status  |
+
+The character X signifies buffer characters and has no meaning. Responses will be identical to requests but the X buffer characters will instead contain the status requested.
 
 **Example 1)** C# App Requesting Active Status from Mbed when device is armed:<br>
 | Send      | Recieve   |
@@ -171,11 +176,11 @@ When the Mbed or C# Application send a request, both the request and response st
 |-----------|-----------|
 |           | !!!!      |
 
-## How to start Software on the Device
+# How to start Software on the Device
 1. Compile and add Mbed Code
-  * Download needed libraries into Keil Studio
-    * XNucleo53L0A1.h
-    * rtos.h
+  * Import needed libraries into Keil Studio mbed 2.0 project
+    * [Mbed RTOS](https://os.mbed.com/users/mbed_official/code/mbed-rtos/#5713cbbdb706a1e02938701baf0a466463b41ada)
+    * [X_NUCLEO_53L0A1](https://developer.mbed.org/teams/ST/code/X_NUCLEO_53L0A1/#27d3d95c8593)
   * Compile and send to Mbed
 2. Configure Pi
   * Transfer PiTCPServer.c to the Pi and compile it using `gcc PiTCPServer.c -lpthread`
