@@ -5,7 +5,6 @@ using System.Net.Sockets;
 
 namespace SecurityApplication
 {
-
     public enum alarmState {
         ARMED,
         DISARMED,
@@ -14,18 +13,15 @@ namespace SecurityApplication
 
     public class Program
     {
-        /// <summary>
-        /// The main entry point for the application.
-        /// </summary>
-
-        public static event EventHandler AlarmTriggered;
-
+        //TCP Connection
         public static String ipServer = "";
         public static Int32 port = 61000;
         public static TcpClient client;
         public static NetworkStream stream;
         public static String connectionErrorMessage = "";
+        private static bool connectionOpened = false;
 
+        //Message Headers
         public static String ackMessage= "!CCC";
         public static String testMessage = "!XXX";
         public static String activateToggleMessage = "!A";
@@ -34,13 +30,14 @@ namespace SecurityApplication
         public static String volumeMessage = "!M";
         public static String triggeredMessage = "!!!!";
 
+        //Message Request Headers
         public static String requestActiveMessage = "#A";
         public static String requestBrightnessMessage = "#B";
         public static String requestVolumeMessage = "#M";
         public static String requestTriggeredMessage = "#T";
 
+        //Message Buffer
         private static String buffer = "XX";
-        private static bool connectionOpened = false;
 
         private static FormSecurityApp guiForm;
 
@@ -59,24 +56,14 @@ namespace SecurityApplication
         public static bool openConnection()
         {
             try {
-                // Prefer a using declaration to ensure the instance is Disposed later.
                 client = new TcpClient(ipServer, port);
-
-                // Translate the passed message into ASCII and store it as a Byte array.
                 Byte[] data = System.Text.Encoding.ASCII.GetBytes(testMessage);
-
-                // Get a client stream for reading and writing.
                 stream = client.GetStream();
 
                 // Send the message to the connected TcpServer.
                 stream.Write(data, 0, data.Length);
 
-                // Receive the server response.
-
-                // Buffer to store the response bytes.
                 data = new Byte[256];
-
-                // String to store the response ASCII representation.
                 String responseData = String.Empty;
 
                 // Read the first batch of the TcpServer response bytes.
@@ -89,8 +76,6 @@ namespace SecurityApplication
                     Console.WriteLine("Incorrect data sent back: {0}", responseData);
                 }
 
-                // Explicit close is not necessary since TcpClient.Dispose() will be
-                // called automatically.
                 Console.WriteLine("Successful connection opened");
                 connectionErrorMessage = "";
                 connectionOpened = true;
@@ -98,6 +83,7 @@ namespace SecurityApplication
             }
             catch (ArgumentNullException ex)
             {
+                //Issue with IP address
                 Console.WriteLine("ArgumentNullException: {0}", ex);
                 connectionErrorMessage = ex.Message;
                 connectionOpened = false;
@@ -105,6 +91,7 @@ namespace SecurityApplication
             }
             catch (SocketException ex)
             {
+                //Issue with socket connection
                 Console.WriteLine("SocketException: {0}", ex);
                 connectionErrorMessage = ex.Message;
                 connectionOpened = false;
@@ -140,14 +127,10 @@ namespace SecurityApplication
 
         public static bool sendMessage(String message)
         {
-            //May need to add acknowledge checks when there is time
             if (connectionOpened)
             {
                 String messageWithBuffer = message + buffer;
-                // Translate the passed message into ASCII and store it as a Byte array.
                 Byte[] data = System.Text.Encoding.ASCII.GetBytes(messageWithBuffer);
-
-                // Send the message to the connected TcpServer.
                 stream.Write(data, 0, data.Length);
 
                 return true;
@@ -161,22 +144,16 @@ namespace SecurityApplication
 
         public static String requestMessage(String message)
         {
-            //May need to add acknowledge checks when there is time
             if (connectionOpened)
             {
+                //Send request message
                 String messageWithBuffer = message + buffer;
-                // Translate the passed message into ASCII and store it as a Byte array.
                 Byte[] data = System.Text.Encoding.ASCII.GetBytes(messageWithBuffer);
-
-                // Send the message to the connected TcpServer.
                 stream.Write(data, 0, data.Length);
 
+                //Recieve response message
                 data = new Byte[256];
-
-                // String to store the response ASCII representation.
                 String responseData = String.Empty;
-
-                // Read the first batch of the TcpServer response bytes.
                 Int32 bytes = stream.Read(data, 0, data.Length);
                 responseData = System.Text.Encoding.ASCII.GetString(data, 0, bytes);
 
@@ -190,7 +167,7 @@ namespace SecurityApplication
             }
         }
 
-
+        //Thread function created to check if alarm has been triggered
         public static bool checkTriggered()
         {
             Console.WriteLine("Running check triggered");
@@ -206,6 +183,7 @@ namespace SecurityApplication
                         input = System.Text.Encoding.ASCII.GetString(data, 0, i);
                         if (input.Contains(triggeredMessage))
                         {
+                            //Change status on GUI
                             Console.WriteLine("Received Triggered Status");
                             guiForm.Invoke(new MethodInvoker(guiForm.alarmTriggered));
                         }
@@ -215,7 +193,7 @@ namespace SecurityApplication
                 {
                     //If problem with connection, retry on next loop
                 }
-                Thread.Sleep(1000);
+                Thread.Sleep(1000); //Run no more than once per second
             }
         }
     }
