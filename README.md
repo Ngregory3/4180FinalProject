@@ -188,9 +188,9 @@ When the Mbed or C# Application send a request, both the request and response st
     * Example: '170.43.118.20:1880'
   * Import the EmailTriggerFlow.json file into Node-Red
     * Open the send email block
-    * Put in your email address, userID, and password
+    * Put in your email address, userID, and password<br>
     <img src="https://raw.githubusercontent.com/Ngregory3/4180FinalProject/main/Images/EmailFlowProperties.JPG" width="350"><br>
-  * Deploy the EmailTriggerFlow to the Pi<br>
+  * Deploy the EmailTriggerFlow to the Pi
 3. C# Application
   * Open the SecurityApplicaton.sln solution file in Microsoft Visual Studio
   * Click "Start" to run the application
