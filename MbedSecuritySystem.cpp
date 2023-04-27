@@ -8,11 +8,13 @@ PwmOut red(p21);
 PwmOut green(p22);
 PwmOut blue(p23);
 PwmOut speaker(p24);
+DigitalOut piTrigger(p5);
 
 volatile bool triggered = false;
 volatile bool armed = false;
 volatile float brightness = 1.0;
 volatile bool muted = true;
+volatile bool triggerSent = false;
 
 #define VL53L0_I2C_SDA   p28
 #define VL53L0_I2C_SCL   p27
@@ -72,8 +74,12 @@ void tripWire(void const *args) {
             } else {
                 triggerCount = 0;
             }
-            if (triggerCount > 3) {
+            if (triggerCount > 3 && !triggered) {
                 triggered = true;
+                triggerSent = false;
+                piTrigger = 1;
+                Thread::wait(200);
+                piTrigger = 0;
             }
         }
     }
@@ -85,15 +91,10 @@ int main()
     Thread t1(tripWire);
     Thread t2(alarmLED);
     Thread t3(alarmSound);
+    piTrigger = 0;
 
     char buffer[4];
     while (1) {
-        if (triggered && pi.writable()) {
-            pi.putc('!');
-            pi.putc('!');
-            pi.putc('!');
-            pi.putc('!');
-        }
         if (pi.readable()) {
             buffer[0] = pi.getc();
             buffer[1] = pi.getc();
@@ -103,14 +104,23 @@ int main()
             if (buffer[0] == '!') {
                 switch(buffer[1]) {
                     case 'A':
-                        armed = !armed;
-                        triggered = false;
+                        switch (buffer[2]) {
+                            case '0':
+                                armed = false;
+                                triggered = false;
+                                break;
+                            case '1':
+                                armed = true;
+                                triggered = false;
+                                break;
+                        }
                         break;
                     case 'D':
                         triggered = false;
                         break;
                     case 'M':
                         muted = !muted;
+                        break;
                     case 'B':
                         switch(buffer[2]) {
                             case '0':
@@ -146,10 +156,67 @@ int main()
                         }
                 }
             }
+            if (buffer[0] == '#') {
+                switch (buffer[1]) {
+                    case 'T':
+                        if (triggered) {
+                            pi.putc('#');
+                            pi.putc('T');
+                            pi.putc('1');
+                            pi.putc('1');
+                        } else {
+                            pi.putc('#');
+                            pi.putc('T');
+                            pi.putc('0');
+                            pi.putc('0');
+                        }
+                        break;
+                    case 'A':
+                        if (armed) {
+                            pi.putc('#');
+                            pi.putc('A');
+                            pi.putc('1');
+                            pi.putc('1');
+                        } else {
+                            pi.putc('#');
+                            pi.putc('A');
+                            pi.putc('0');
+                            pi.putc('0');
+                        }
+                        break;
+                    case 'M':
+                        if (muted) {
+                            pi.putc('#');
+                            pi.putc('M');
+                            pi.putc('1');
+                            pi.putc('1');
+                        } else {
+                            pi.putc('#');
+                            pi.putc('M');
+                            pi.putc('0');
+                            pi.putc('0');
+                        }
+                        break;
+                    case 'B':
+                        int b = 0;
+                        if (brightness > 0) {
+                            b = static_cast<int>(brightness * 10.0 - 1);
+                        }
+                        b += 48;
+                        pi.putc('#');
+                        pi.putc('B');
+                        pi.putc(static_cast<char>(b));
+                        pi.putc(static_cast<char>(b));
+                        break;
+                }
+            }
+        }
+        if (triggered && pi.writable() && !triggerSent) {
             pi.putc('!');
-            pi.putc('C');
-            pi.putc('C');
-            pi.putc('C');
+            pi.putc('!');
+            pi.putc('!');
+            pi.putc('!');
+            triggerSent = true;
         }
         Thread::wait(300);
     }
