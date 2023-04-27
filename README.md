@@ -79,6 +79,7 @@ Three threads are created:<br>
   * Triggered: RED and Flashing (0.2 second period)
   * Armed: BLUE and ON
   * Disarmed: GREEN and ON<br>
+  <img src="https://raw.githubusercontent.com/Ngregory3/4180FinalProject/main/Images/LEDStatusLights.png" width="350"><br>
 * alarmSound Thread<br>
   The alarmSound Thread sets the PWM output of the speaker to 0.5 if triggered, and 0 otherwise. If the system is muted, then the speaker output will always be set to 0.
 
