@@ -171,4 +171,29 @@ When the Mbed or C# Application send a request, both the request and response st
 |-----------|-----------|
 |           | !!!!      |
 
-
+## How to start Software on the Device
+1. Compile and add Mbed Code
+  * Download needed libraries into Keil Studio
+    * XNucleo53L0A1.h
+    * rtos.h
+  * Compile and send to Mbed
+2. Configure Pi
+  * Transfer PiTCPServer.c to the Pi and compile it using `gcc PiTCPServer.c -lpthread`
+  * Install Node Red using your preferred method (if not already installed)
+  * Connect to the same wifi network as your PC
+  * Use `ifconfig` and make note of the Pi's IP address
+  * Run both the TCP server and Node Red using `sudo ./a.out & node-red && fg`
+  * If the server is running correctly it should display  `Waiting for connection request...`
+  * Using a PC browser, go to the IP address at port 1880
+    * Example: '170.43.118.20:1880'
+  * Import the EmailTriggerFlow.json file into Node-Red
+    * Open the send email block
+    * Put in your email address, userID, and password
+    <img src="https://raw.githubusercontent.com/Ngregory3/4180FinalProject/main/Images/EmailFlowProperties.JPG" width="350"><br>
+  * Deploy the EmailTriggerFlow to the Pi<br>
+3. C# Application
+  * Open the SecurityApplicaton.sln solution file in Microsoft Visual Studio
+  * Click "Start" to run the application
+  * The default application GUI should appear until a connection is made<br>
+  <img src="https://raw.githubusercontent.com/Ngregory3/4180FinalProject/main/Images/StartupScreen.JPG" width="350"><br>
+  
